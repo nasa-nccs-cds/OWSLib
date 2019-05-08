@@ -9,7 +9,7 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import sys
+import sys, os, time, socket
 from collections import OrderedDict
 from dateutil import parser
 from datetime import datetime, timedelta
@@ -654,17 +654,19 @@ def bind_url(url):
     return '%s%s' % (url, binder)
 
 import logging
-# Null logging handler
-try:
-    # Python 2.7
-    NullHandler = logging.NullHandler
-except AttributeError:
-    # Python < 2.7
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
 log = logging.getLogger('owslib')
-log.addHandler(NullHandler())
+LOG_DIR = os.path.expanduser("~/.edas/logs")
+if not os.path.exists(LOG_DIR):  os.makedirs(LOG_DIR)
+timestamp = time.strftime("%Y-%m-%d_%H:%M:%S", time.gmtime())
+fh = logging.FileHandler("{}/ows-wps-{}-{}.log".format(LOG_DIR, socket.gethostname(), timestamp))
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('ows-wps-%(asctime)s-%(levelname)s: %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+log.addHandler(fh)
+log.addHandler(ch)
 
 def which_etree():
     """decipher which etree library is being used by OWSLib"""
